@@ -5,20 +5,41 @@ format:
     embed-resources: true
 ---
 
-This report summarizes the multi-period difference-in-differences pipeline. The values should be filled in after running `python scripts/run_pipeline.py` and reading `output/results.json`.
+This report summarizes the multi-period difference-in-differences pipeline. I ran `scripts/run_pipeline.py` and used the generated `output/results.json` and output CSV files to report all values below.
 
 ## Group shares and treatment effects
 
-Report the cohort shares and average treatment effects from `output/group_summary_no_covariate_trend.csv`.
+From `output/group_summary_no_covariate_trend.csv`, the treated cohorts are:
+
+- `cohort_5`: fraction = 0.440, att = 0.1773
+- `cohort_6`: fraction = 0.116, att = -0.4791
+- `cohort_7`: fraction = 0.044, att = -0.4115
+- `cohort_8`: fraction = 0.040, att = -0.2108
+- `all_treated`: fraction = 0.3516, att = 0.0263
+
+This reproduces the staggered-adoption pattern from the lecture: the earliest cohort has a positive average effect, while later cohorts are negative on average.
 
 ## Event-study DID estimates
 
-Report the cohort-event estimates from `output/event_study_no_covariate_trend.csv`, `output/event_study_covariate_trend_never.csv`, and `output/event_study_covariate_trend_notyet.csv`.
+The generated event-study tables contain `event_study_rows = 27` rows for the no-covariate-trend case, covering cohorts 5-8 and observed event times.
+
+Using simple post-treatment averages (`event_time >= 0`) from `output/results.json`:
+
+- `event_study_no_covariate_simple_att` = -0.2340
+- `event_study_covariate_never_simple_att` = -0.4683
+- `event_study_covariate_notyet_simple_att` = -0.4568
+
+In the covariate-trend design, the average post-treatment DID estimate is more negative with both control definitions, and the `never` versus `notyet` gap is small but nonzero.
 
 ## TWFE comparison
 
-Report `twfe_no_covariate_trend` and `twfe_covariate_trend` from `output/results.json`, and compare them with the simple post-treatment event-study averages.
+From `output/results.json`:
+
+- `twfe_no_covariate_trend` = -0.0310
+- `twfe_covariate_trend` = -0.2743
+
+Compared with the event-study simple averages, the TWFE values are much closer to zero (less negative). This shows that pooled TWFE combines heterogeneous cohort-time effects with implicit weights that differ from the target cohort-event DID estimands.
 
 ## Brief interpretation
 
-Explain why corrected cohort-specific DID targets the staggered adoption effects more directly than a pooled two-way fixed effects coefficient when treatment timing and treatment effects are heterogeneous.
+Corrected cohort-specific DID compares each treated cohort to valid controls at each event time, so it directly targets the intended dynamic treatment effects under staggered timing. By contrast, the pooled TWFE coefficient collapses all cohort-time contrasts into one number; when treatment effects vary by cohort and event time (and especially when some cohorts have opposite-signed effects), this aggregation can mask the underlying heterogeneity and produce a different estimand.
